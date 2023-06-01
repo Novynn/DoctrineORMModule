@@ -7,6 +7,7 @@ namespace DoctrineORMModule\Yuml;
 use Doctrine\Persistence\Mapping\ClassMetadata;
 use Exception;
 
+use function array_key_exists;
 use function class_exists;
 use function get_parent_class;
 use function implode;
@@ -56,7 +57,7 @@ class MetadataGrapher
 
             $associations = $class->getAssociationNames();
 
-            if (empty($associations) && ! isset($this->visitedAssociations[$class->getName()])) {
+            if (empty($associations) && ! array_key_exists($class->getName(), $this->visitedAssociations)) {
                 $str[] = $this->getClassString($class);
 
                 continue;

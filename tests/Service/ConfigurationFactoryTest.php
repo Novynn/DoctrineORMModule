@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace DoctrineORMModuleTest\Service;
 
-use Doctrine\Common\Cache\ArrayCache;
+use Doctrine\Common\Cache\Cache;
 use Doctrine\Common\Cache\Psr6\CacheAdapter;
 use Doctrine\DBAL\Driver;
 use Doctrine\DBAL\Driver\Middleware;
@@ -15,9 +15,11 @@ use Doctrine\ORM\Mapping\EntityListenerResolver;
 use Doctrine\ORM\Mapping\NamingStrategy;
 use Doctrine\ORM\Mapping\QuoteStrategy;
 use Doctrine\Persistence\Mapping\Driver\MappingDriver;
+use DoctrineModule\Cache\LaminasStorageCache;
 use DoctrineORMModule\Options\Configuration;
 use DoctrineORMModule\Service\ConfigurationFactory;
 use DoctrineORMModuleTest\Assets\RepositoryClass;
+use Laminas\Cache\Storage\Adapter\Memory;
 use Laminas\ServiceManager\Exception\InvalidArgumentException;
 use Laminas\ServiceManager\ServiceManager;
 use PHPUnit\Framework\TestCase;
@@ -37,11 +39,11 @@ class ConfigurationFactoryTest extends TestCase
     {
         $this->serviceManager = new ServiceManager();
         $this->factory        = new ConfigurationFactory('test_default');
-        $this->serviceManager->setService('doctrine.cache.array', new ArrayCache());
         $this->serviceManager->setService(
             'doctrine.driver.orm_default',
             $this->createMock(MappingDriver::class)
         );
+        $this->serviceManager->setService('doctrine.cache.array', new LaminasStorageCache(new Memory()));
     }
 
     public function testWillInstantiateConfigWithoutNamingStrategySetting(): void
@@ -164,7 +166,7 @@ class ConfigurationFactoryTest extends TestCase
         $this->serviceManager->setService('config', $config);
         $factory   = new ConfigurationFactory('test_default');
         $ormConfig = $factory($this->serviceManager, Configuration::class);
-        $this->assertInstanceOf(ArrayCache::class, $ormConfig->getHydrationCacheImpl());
+        $this->assertInstanceOf(Cache::class, $ormConfig->getHydrationCacheImpl());
     }
 
     public function testCanSetDefaultRepositoryClass(): void
@@ -184,7 +186,7 @@ class ConfigurationFactoryTest extends TestCase
 
         $factory   = new ConfigurationFactory('test_default');
         $ormConfig = $factory($this->serviceManager, Configuration::class);
-        $this->assertInstanceOf(ArrayCache::class, $ormConfig->getHydrationCacheImpl());
+        $this->assertInstanceOf(Cache::class, $ormConfig->getHydrationCacheImpl());
     }
 
     public function testAcceptsMetadataFactory(): void
@@ -376,7 +378,7 @@ class ConfigurationFactoryTest extends TestCase
         $reflProperty->setAccessible(true);
         $cacheDecorator = $reflProperty->getValue($cacheFactory);
         $this->assertInstanceOf(CacheAdapter::class, $cacheDecorator);
-        $this->assertInstanceOf(ArrayCache::class, $cacheDecorator->getCache());
+        $this->assertInstanceOf(Cache::class, $cacheDecorator->getCache());
     }
 
     public function testConfigureMiddlewares(): void
